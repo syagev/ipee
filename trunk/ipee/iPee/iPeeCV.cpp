@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "iPee.h"
 #include "iPeeCV.h"
 #include "cv.h"
 #include "highgui.h"
@@ -33,6 +34,31 @@ CiPeeCV::~CiPeeCV(void)
 
 // -- Methods -----------------
 
+BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam)
+{
+	TCHAR sWndName[64];
+	GetWindowText(hwnd, sWndName, 64);
+
+	if (wcsstr(sWndName, _T("Flash Player")) != NULL)
+	{
+		((CiPeeCV*)lParam)->m_hWndGame = hwnd;
+		return FALSE;
+	}
+	else 
+	{
+		((CiPeeCV*)lParam)->m_hWndGame = NULL;
+		return TRUE;
+	}
+}
+
+//find the game window for sending mouse events
+HWND CiPeeCV::FindGameWindow(void)
+{
+	EnumWindows((WNDENUMPROC)EnumWindowsProc, (LPARAM)this);
+
+	return m_hWndGame;
+}
+
 //starts the engine's worker thread with the specified cam as input
 void CiPeeCV::StartFromCam(int iCamID)
 {
@@ -40,6 +66,9 @@ void CiPeeCV::StartFromCam(int iCamID)
 		SendErrEvt(_T("Engine's thread already running"));
 	else
 	{
+		//try to find the game window
+		FindGameWindow();
+
 		//set the running flags and start the CV engine's worker thread
 		m_bTerminating = false;
 		m_iCamID = iCamID;
@@ -56,6 +85,9 @@ void CiPeeCV::StartFromFiles(CAPFILEENUMPROC capFileEnumProc, void* pTag)
 		SendErrEvt(_T("Engine's thread already running"));
 	else
 	{
+		//try to find the game window
+		FindGameWindow();
+
 		//set the files enumeration context
 		m_capFileEnumProc = capFileEnumProc;
 		m_pFileEnumTag = pTag;
@@ -118,6 +150,13 @@ void CiPeeCV::SendErrEvt(LPCTSTR lpMsg, int iErr /*=NULL*/, bool bNeedCleanup /*
 }
 
 
+//transofrms and sends the game the specified mouse input
+void SendMouseInput(int x, int y)
+{
+	if (m_hWndGame != NULL)
+		SendMessage(pThis->m_hWndGame, WM_MOUSEMOVE, NULL, MAKELPARAM(x++, 300));
+}
+
 // -- CV Worker Thread --------
 UINT iPeeCV(CiPeeCV* pThis)
 {
@@ -129,6 +168,8 @@ UINT iPeeCV(CiPeeCV* pThis)
 	IplImage* iplFrame = 0;
 	IplImage* laplace = 0;
 	IplImage* colorlaplace = 0;
+	IplImage* iplCanny = 0;
+	IplImage* iplGray = 0;
     IplImage* planes[3] = { 0, 0, 0 };
     int i;
 	
@@ -147,10 +188,14 @@ UINT iPeeCV(CiPeeCV* pThis)
 			iRes = -1;
 			break;
 		}
-	
+		
+		//CvVideoWriter* cvWriter = cvCreateAVIWriter(
+		//	CT2A(theApp.GetWithPath(_T("01_laplace.avi"))), 
+		//	CV_FOURCC('M','J','P','G'), 30, cvSize(320,240));
+
 		//main thread loop
 		while (!pThis->m_bTerminating)
-		{		
+		{
 			//grab and retrieve a frame from capture
 			iplFrame = cvQueryFrame( capture );
 			if( !iplFrame )
@@ -162,8 +207,12 @@ UINT iPeeCV(CiPeeCV* pThis)
 					planes[i] = cvCreateImage( cvSize(iplFrame->width,iplFrame->height), 8, 1 );
 				laplace = cvCreateImage( cvSize(iplFrame->width,iplFrame->height), IPL_DEPTH_16S, 1 );
 				colorlaplace = cvCreateImage( cvSize(iplFrame->width,iplFrame->height), 8, 3 );
+				
+				iplGray = cvCreateImage( cvSize(iplFrame->width, iplFrame->height), IPL_DEPTH_8U, 1 );
+				
+				iplCanny = cvCreateImage(cvSize(iplFrame->width,iplFrame->height), IPL_DEPTH_8U, 1);
 			}
-
+			
 			cvCvtPixToPlane( iplFrame, planes[0], planes[1], planes[2], 0 );
 			for( i = 0; i < 3; i++ )
 			{
@@ -172,13 +221,21 @@ UINT iPeeCV(CiPeeCV* pThis)
 			}
 			cvCvtPlaneToPix( planes[0], planes[1], planes[2], 0, colorlaplace );
 			colorlaplace->origin = iplFrame->origin;
+			
+			//convert original color image (3 channel rgb color image) to gray-level image
+			cvCvtColor( iplFrame, iplGray, CV_BGR2GRAY );
+			
+			//cvCanny(iplGray, iplCanny, 100, 200);
 
 			cvShowImage("iPeeOrig", iplFrame);
 			cvShowImage("iPeePass1", colorlaplace );
+			//cvWriteToAVI(cvWriter, colorlaplace);
 
 			if( cvWaitKey(10) >= 0 )
 				break;
 		}
+
+		//cvReleaseVideoWriter(&cvWriter);
 
 		//cleanup the capture
 		cvReleaseCapture( &capture );

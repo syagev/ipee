@@ -37,8 +37,13 @@ public:
 	CAPFILEENUMPROC m_capFileEnumProc;	//enumeration proc for capture files
 	void* m_pFileEnumTag;	//tag data to be passed to the file enum proc
 	int m_iCamID;			//the cam ID used for input
+	HWND m_hWndGame;		//the handle to the game window recieving mouse events
 
 // -- Methods -----------------
+private:
+	HWND FindGameWindow(void);
+	void SendMouseInput(int x, int y);
+
 public:
 	void StartFromCam(int iCamID);
 	void StartFromFiles(CAPFILEENUMPROC capFileEnumProc, void* pTag);
