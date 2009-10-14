@@ -1,5 +1,6 @@
 #pragma once
 #include "afxwin.h"
+#include "afxcmn.h"
 
 #define MAX_FILES	32
 
@@ -24,6 +25,11 @@ public:
 	CListBox m_lstFiles;					//the files list box
 	CiPeeDlg* m_piPeeDlg;					//the parent iPee dlg control panel
 	CList<CString, CString&> m_lstPaths;	//a list with paths to the files
+	CButton m_chkLearn;
+	CSliderCtrl m_sliderAngle;
+	CSliderCtrl m_sliderPeeStartPos;
+	CEdit m_txtAngleFilter;
+	CEdit m_txtPeeStartPos;
 
 //-- Event Handlers --------
 protected:
@@ -39,6 +45,13 @@ protected:
 	//message map implementation
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnDestroy();
+public:
+	afx_msg void OnBnClickedChkLearn();
+	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	void OnEngineUp(void);
+	CIPAddressCtrl m_txtIP;
+	CEdit m_txtPort;
+	afx_msg void OnBnClickedBtnConnect();
 };
 
 bool CaptureFileEnumProc(void* pTag, CString& sFile);

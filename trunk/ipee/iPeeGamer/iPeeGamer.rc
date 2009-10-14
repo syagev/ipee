@@ -54,7 +54,7 @@ BEGIN
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
     "LANGUAGE 9, 1\r\n"
     "#pragma code_page(1252)\r\n"
-    "#include ""res\\iPee.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""res\\iPeeGamer.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
     "#include ""afxres.rc""     // Standard components\r\n"
     "#endif\r\n"
     "\0"
@@ -70,50 +70,22 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\iPee.ico"
+IDR_MAINFRAME           ICON                    "res\\iPeeGamer.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Dialog
 //
 
-IDD_IPEE_DIALOG DIALOGEX 460, 60, 206, 306
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+IDD_IPEEGAMER_DIALOG DIALOGEX 0, 0, 167, 84
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
-CAPTION "iPee Control Panel"
-MENU IDR_MENU
+CAPTION "iPeeGamer"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    CONTROL         "",IDC_TAB,"SysTabControl32",0x0,7,7,192,240
-    EDITTEXT        IDC_TXT_STATUS,7,253,190,46,ES_MULTILINE | ES_AUTOVSCROLL | ES_READONLY
-END
-
-IDD_TAB_DEBUG DIALOGEX 0, 0, 185, 250
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
-FONT 8, "MS Shell Dlg", 400, 0, 0x0
-BEGIN
-    LISTBOX         IDC_LST_FILES,15,20,105,90,LBS_SORT | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Add",IDC_BTN_ADD,126,20,46,12
-    PUSHBUTTON      "&Remove",IDC_BTN_REMOVE,126,34,46,12
-    GROUPBOX        "CAM Simulation",IDC_STATIC,7,7,171,111
-    PUSHBUTTON      "Play",IDC_BTN_PLAY,126,48,46,12
-    PUSHBUTTON      "&Stop",IDC_BTN_STOP,126,62,46,12
-    PUSHBUTTON      "U",IDC_BTN_UP,126,77,17,15
-    PUSHBUTTON      "D",IDC_BTN_DOWN,126,94,17,15
-    GROUPBOX        "Controls",IDC_STATIC,7,121,171,64
-    CONTROL         "Learn",IDC_CHK_LEARN,"Button",BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP,58,136,46,11
-    CONTROL         "",IDC_SLIDER_ANGLE,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,53,150,89,15
-    LTEXT           "Background:",IDC_STATIC,14,137,41,8
-    LTEXT           "Angle filter:",IDC_STATIC,15,153,38,8
-    CONTROL         "",IDC_SLIDER_ANGLE2,"msctls_trackbar32",TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,53,166,89,15
-    LTEXT           "Pee start p:",IDC_STATIC,15,169,39,8
-    EDITTEXT        IDC_TXT_ANGLE_FILTER,143,153,23,12,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
-    EDITTEXT        IDC_TXT_PEE_START_POS,143,168,23,12,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
-    GROUPBOX        "iPee Gamer",IDC_STATIC,7,191,171,52
-    CONTROL         "",IDC_IPADDRESS,"SysIPAddress32",WS_TABSTOP,22,206,100,12
-    LTEXT           ":",IDC_STATIC,124,208,8,9
-    EDITTEXT        IDC_TXT_PORT,129,206,32,13,ES_AUTOHSCROLL | ES_NUMBER
-    CONTROL         "Connect",IDC_BTN_CONNECT,"Button",BS_AUTOCHECKBOX | BS_PUSHLIKE | WS_TABSTOP,99,223,63,11
+    DEFPUSHBUTTON   "OK",IDOK,110,63,50,14
+    EDITTEXT        IDC_EDIT1,23,34,121,14,ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
+    LTEXT           "Status:",IDC_STATIC,25,23,24,8
 END
 
 
@@ -142,9 +114,9 @@ BEGIN
             VALUE "CompanyName", "TODO: <Company name>"
             VALUE "FileDescription", "TODO: <File description>"
             VALUE "FileVersion", "1.0.0.1"
-            VALUE "InternalName", "iPee.exe"
+            VALUE "InternalName", "iPeeGamer.exe"
             VALUE "LegalCopyright", "TODO: (c) <Company name>.  All rights reserved."
-            VALUE "OriginalFilename", "iPee.exe"
+            VALUE "OriginalFilename", "iPeeGamer.exe"
             VALUE "ProductName", "TODO: <Product name>"
             VALUE "ProductVersion", "1.0.0.1"
         END
@@ -164,20 +136,12 @@ END
 #ifdef APSTUDIO_INVOKED
 GUIDELINES DESIGNINFO 
 BEGIN
-    IDD_IPEE_DIALOG, DIALOG
+    IDD_IPEEGAMER_DIALOG, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 199
+        RIGHTMARGIN, 160
         TOPMARGIN, 7
-        BOTTOMMARGIN, 299
-    END
-
-    IDD_TAB_DEBUG, DIALOG
-    BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 178
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 243
+        BOTTOMMARGIN, 77
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -185,22 +149,12 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Menu
+// String Table
 //
 
-IDR_MENU MENU 
+STRINGTABLE 
 BEGIN
-    MENUITEM "&File",                       ID_FILE
-    POPUP "i&Pee"
-    BEGIN
-        MENUITEM "&Load Engine",                ID_MNU_LOADENGINE
-        MENUITEM "&Unload Engine",              ID_MNU_UNLOADENGINE
-        MENUITEM "&Restart Engine",             ID_IPEE_RESTARTENGINE
-        MENUITEM SEPARATOR
-        MENUITEM "&Start CAM",                  ID_IPEE_STARTCAM
-        MENUITEM "S&top CAM",                   ID_IPEE_STOPCAM
-    END
-    MENUITEM "&Help",                       0
+    IDP_SOCKETS_INIT_FAILED "Windows sockets initialization failed."
 END
 
 #endif    // English (U.S.) resources
@@ -221,7 +175,7 @@ END
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 LANGUAGE 9, 1
 #pragma code_page(1252)
-#include "res\iPee.rc2"  // non-Microsoft Visual C++ edited resources
+#include "res\iPeeGamer.rc2"  // non-Microsoft Visual C++ edited resources
 #include "afxres.rc"     // Standard components
 #endif
 

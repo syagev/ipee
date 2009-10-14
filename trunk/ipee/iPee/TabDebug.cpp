@@ -29,19 +29,37 @@ BEGIN_MESSAGE_MAP(CTabDebug, CDialog)
 	ON_BN_CLICKED(IDC_BTN_PLAY, &CTabDebug::OnBnClickedBtnPlay)
 	ON_BN_CLICKED(IDC_BTN_STOP, &CTabDebug::OnBnClickedBtnStop)
 	ON_WM_DESTROY()
+//	ON_NOTIFY(BCN_HOTITEMCHANGE, IDC_CHK_LEARN, &CTabDebug::OnChangedLearn)
+//	ON_BN_CLICKED(IDC_CHK_LEARN, &CTabDebug::OnClickedLearn)
+ON_BN_CLICKED(IDC_CHK_LEARN, &CTabDebug::OnBnClickedChkLearn)
+//ON_NOTIFY(TRBN_THUMBPOSCHANGING, IDC_SLIDER_ANGLE, &CTabDebug::OnChangedSliderAngle)
+ON_WM_HSCROLL()
+ON_BN_CLICKED(IDC_BTN_CONNECT, &CTabDebug::OnBnClickedBtnConnect)
 END_MESSAGE_MAP()
 
 //initDialog - called by the framework when dlg is loaded
 BOOL CTabDebug::OnInitDialog()
 {
 	CDialog::OnInitDialog();
+
+	if (m_lstFiles.GetCount() > 0)
+		return TRUE;
 	
+	//open the files list
 	CStdioFile fFiles(theApp.GetWithPath(_T("AVIfiles.txt")), 
 		CFile::modeRead | CFile::typeText);
 	
 	if (fFiles.m_hFile)
 	{
 		CString sPath;
+		
+		//read the gamer's address and port
+		fFiles.ReadString(sPath);
+		m_txtIP.SetWindowText(sPath);
+		fFiles.ReadString(sPath);
+		m_txtPort.SetWindowText(sPath);
+		
+		//read the AVI file list
 		while (fFiles.ReadString(sPath))
 		{
 			m_lstPaths.AddTail(sPath);
@@ -52,6 +70,9 @@ BOOL CTabDebug::OnInitDialog()
 		fFiles.Close();
 	}
 
+	m_sliderAngle.SetRange(0,90);
+	m_sliderPeeStartPos.SetRange(0, 200);
+
 	return TRUE;
 }
 
@@ -60,6 +81,13 @@ void CTabDebug::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_LST_FILES, m_lstFiles);
+	DDX_Control(pDX, IDC_CHK_LEARN, m_chkLearn);
+	DDX_Control(pDX, IDC_SLIDER_ANGLE, m_sliderAngle);
+	DDX_Control(pDX, IDC_SLIDER_ANGLE2, m_sliderPeeStartPos);
+	DDX_Control(pDX, IDC_TXT_ANGLE_FILTER, m_txtAngleFilter);
+	DDX_Control(pDX, IDC_TXT_PEE_START_POS, m_txtPeeStartPos);
+	DDX_Control(pDX, IDC_IPADDRESS, m_txtIP);
+	DDX_Control(pDX, IDC_TXT_PORT, m_txtPort);
 }
 
 //add button - pick a file and add it to the list and array
@@ -142,8 +170,11 @@ void CTabDebug::OnBnClickedBtnPlay()
 {
 	//check that the user selected a file to start from
 	if (m_lstPaths.GetCount() > 0 && m_lstFiles.GetCurSel() != LB_ERR) {
-		if (m_piPeeDlg->m_piPeeCV)
+		if (m_piPeeDlg->m_piPeeCV) {
+			m_chkLearn.SetCheck(BST_CHECKED);
+			OnBnClickedChkLearn();
 			m_piPeeDlg->m_piPeeCV->StartFromFiles(&CaptureFileEnumProc, this);
+		}
 		else
 			m_piPeeDlg->AppendStatus(_T("Cannot play. iPeeCV engine down"));
 	}
@@ -185,9 +216,18 @@ void CTabDebug::OnDestroy()
 {
 	CDialog::OnDestroy();
 	
+	//open the data file
 	CStdioFile fFiles(theApp.GetWithPath(_T("AVIfiles.txt")), CFile::modeCreate | 
 		CFile::modeWrite | CFile::typeText);
 	
+	//write the address and port
+	CString s;
+	m_txtIP.GetWindowText(s);
+	fFiles.WriteString(s);
+	m_txtPort.GetWindowText(s);
+	fFiles.WriteString(s);
+	
+	//write the files list
 	POSITION pos = m_lstPaths.GetHeadPosition();
 	for (int i = 0; i < m_lstPaths.GetCount(); i++)
 	{
@@ -196,4 +236,54 @@ void CTabDebug::OnDestroy()
 	}
 	
 	fFiles.Close();
+}
+
+//learning button clicked - set / unset the learning flag in the CV engine
+void CTabDebug::OnBnClickedChkLearn()
+{
+	m_piPeeDlg->m_piPeeCV->m_bLearning = (m_chkLearn.GetCheck() == BST_CHECKED);
+}
+
+//captures the track bar's movement events
+void CTabDebug::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	//these are the relevant event codes
+	if ((nSBCode == 8 || nSBCode == 0) && m_piPeeDlg->m_piPeeCV != NULL) {
+		TCHAR caTxt[4];
+
+		if ((CSliderCtrl*)pScrollBar == &m_sliderAngle) {
+			//set the angle filter threshold
+			m_piPeeDlg->m_piPeeCV->m_iAngleFilter = m_sliderAngle.GetPos();
+			m_txtAngleFilter.SetWindowText(_itot(m_sliderAngle.GetPos(), caTxt, 10));
+		}
+		else if ((CSliderCtrl*)pScrollBar == &m_sliderPeeStartPos) {
+			//set the pee's starting position threshold
+			m_piPeeDlg->m_piPeeCV->m_iPeeStartPos = m_sliderPeeStartPos.GetPos();
+			m_txtPeeStartPos.SetWindowText(
+				_itot(m_piPeeDlg->m_piPeeCV->m_iPeeStartPos, caTxt, 10));
+		}
+	}
+
+	CDialog::OnHScroll(nSBCode, nPos, pScrollBar);
+}
+
+//called by the CV engine when it has finished loading
+void CTabDebug::OnEngineUp(void) {
+	//set the trackbars and texts to the values loaded by the engine
+	m_sliderAngle.SetPos(m_piPeeDlg->m_piPeeCV->m_iAngleFilter);
+	OnHScroll(0, 0, (CScrollBar*)&m_sliderAngle);
+	m_sliderPeeStartPos.SetPos(m_piPeeDlg->m_piPeeCV->m_iPeeStartPos);
+	OnHScroll(0, 0, (CScrollBar*)&m_sliderPeeStartPos);
+}
+
+//connect button - connect the gamer to the to iPee gamer
+void CTabDebug::OnBnClickedBtnConnect()
+{
+	//get the port and address specified
+	CString sIP, sPort;
+	m_txtIP.GetWindowText(sIP);
+	m_txtPort.GetWindowText(sPort);
+	
+	//connect to the gamer
+	m_piPeeDlg->m_piPeeCV->ConnectGamer(sIP, _ttoi(sPort));
 }
