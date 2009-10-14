@@ -28,9 +28,11 @@ protected:
 public:
 	CiPeeCV* m_piPeeCV;		//the iPee CV engine instance
 
+
 //-- Methods ---------------
 public:
 	void AppendStatus(LPCTSTR lpStatus);
+
 
 //-- Event Handlers --------
 protected:

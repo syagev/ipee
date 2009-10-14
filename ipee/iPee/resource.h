@@ -17,6 +17,15 @@
 #define IDC_BTN_STOP                    1012
 #define IDC_BTN_UP                      1013
 #define IDC_BTN_DOWN                    1014
+#define IDC_CHK_LEARN                   1015
+#define IDC_SLIDER_ANGLE                1016
+#define IDC_SLIDER_ANGLE2               1017
+#define IDC_TXT_ANGLE_FILTER            1018
+#define IDC_TXT_PEE_START_POS           1019
+#define IDC_IPADDRESS                   1020
+#define IDC_TXT_PORT                    1021
+#define IDC_CHK_LEARN2                  1022
+#define IDC_BTN_CONNECT                 1022
 #define ID_IPEE_LOADENGIE               32771
 #define ID_IPEE_UNLOADENGINE            32772
 #define ID_MNU_LOADENGINE               32773
@@ -32,7 +41,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        130
 #define _APS_NEXT_COMMAND_VALUE         32779
-#define _APS_NEXT_CONTROL_VALUE         1014
+#define _APS_NEXT_CONTROL_VALUE         1022
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

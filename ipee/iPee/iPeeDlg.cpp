@@ -106,7 +106,6 @@ void CiPeeDlg::OnDestroy()
 	
 	m_pdlgTabs[0]->DestroyWindow();
 	delete m_pdlgTabs[0];
-
 	delete m_pBgBrush;
 
 	//terminate abruptly because comm-dialogs mess up and dead-lock highgui
@@ -176,6 +175,8 @@ void CiPeeDlg::OnMnuLoadEngine()
 {
 	if (!m_piPeeCV) {
 		m_piPeeCV = new CiPeeCV(this);
+		((CTabDebug*)m_pdlgTabs[0])->OnEngineUp();
+
 		AppendStatus(_T("iPee CV engine instance created"));
 	}
 	else
@@ -207,8 +208,11 @@ void CiPeeDlg::OnMnuRestartEngine()
 //start the engine capturing from cam
 void CiPeeDlg::OnMnuStartCAM()
 {
-	if (m_piPeeCV)
+	if (m_piPeeCV) {
+		((CTabDebug*)m_pdlgTabs[0])->m_chkLearn.SetCheck(BST_CHECKED);
+		((CTabDebug*)m_pdlgTabs[0])->OnBnClickedChkLearn();
 		m_piPeeCV->StartFromCam(0);
+	}
 	else
 		AppendStatus(_T("Cannot start capture, engine is down"));
 }
