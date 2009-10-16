@@ -34,7 +34,7 @@ BEGIN_MESSAGE_MAP(CTabDebug, CDialog)
 ON_BN_CLICKED(IDC_CHK_LEARN, &CTabDebug::OnBnClickedChkLearn)
 //ON_NOTIFY(TRBN_THUMBPOSCHANGING, IDC_SLIDER_ANGLE, &CTabDebug::OnChangedSliderAngle)
 ON_WM_HSCROLL()
-ON_BN_CLICKED(IDC_BTN_CONNECT, &CTabDebug::OnBnClickedBtnConnect)
+ON_BN_CLICKED(IDC_CONNECT, &CTabDebug::OnBnClickedConnect)
 END_MESSAGE_MAP()
 
 //initDialog - called by the framework when dlg is loaded
@@ -223,9 +223,9 @@ void CTabDebug::OnDestroy()
 	//write the address and port
 	CString s;
 	m_txtIP.GetWindowText(s);
-	fFiles.WriteString(s);
+	fFiles.WriteString(s); fFiles.WriteString(_T("\n"));
 	m_txtPort.GetWindowText(s);
-	fFiles.WriteString(s);
+	fFiles.WriteString(s); fFiles.WriteString(_T("\n"));
 	
 	//write the files list
 	POSITION pos = m_lstPaths.GetHeadPosition();
@@ -277,7 +277,7 @@ void CTabDebug::OnEngineUp(void) {
 }
 
 //connect button - connect the gamer to the to iPee gamer
-void CTabDebug::OnBnClickedBtnConnect()
+void CTabDebug::OnBnClickedConnect()
 {
 	//get the port and address specified
 	CString sIP, sPort;

@@ -51,7 +51,9 @@ public:
 	void OnEngineUp(void);
 	CIPAddressCtrl m_txtIP;
 	CEdit m_txtPort;
-	afx_msg void OnBnClickedBtnConnect();
+	afx_msg void OnBnClickedConnect();
+	CSliderCtrl m_sliderMaxLen;
+	CEdit m_txtMaxLen;
 };
 
 bool CaptureFileEnumProc(void* pTag, CString& sFile);

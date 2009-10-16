@@ -192,13 +192,12 @@ UINT SockThread(LPVOID pParam)
 		//communication loop
 		do {
 			//recieve a buffer, if failed we are disconnected
-			if ((iRes = recv(sock, (char*)buf + iLen, 1024 - iLen, NULL)) > 0)
-				iLen += iRes;
-			else {
+			if ((iRes = recv(sock, (char*)buf + iLen, 1024 - iLen, NULL)) > 0) {
 			
+				iLen += iRes;
+
 				//process the messages in the buffer
-				for (int i = 0; iLen >= IPEE_MSG_SIZE; iLen -= IPEE_MSG_SIZE, i += 2)
-				{
+				for (int i = 0; iLen >= IPEE_MSG_SIZE; iLen -= IPEE_MSG_SIZE, i += 2) {
 					//extract coordinates and pass to game window
 					x = buf[i];
 					y = buf[i + 1];

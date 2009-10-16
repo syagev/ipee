@@ -54,6 +54,7 @@ public:
 	int m_iRho;
 	int m_iHoughThreshold;
 	int m_iMinLineLen;
+	int m_iMaxLineLen;
 	int m_iMaxLineGap;
 
 	bool m_bLearning;
