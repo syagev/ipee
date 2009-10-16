@@ -37,6 +37,7 @@ CiPeeCV::CiPeeCV(CWnd* pWndCP = NULL)
 		fSettings.Read((void*)&m_iRho, sizeof(int));
 		fSettings.Read((void*)&m_iHoughThreshold, sizeof(int));
 		fSettings.Read((void*)&m_iMinLineLen, sizeof(int));
+		fSettings.Read((void*)&m_iMaxLineLen, sizeof(int));
 		fSettings.Read((void*)&m_iMaxLineGap, sizeof(int));
 		
 		fSettings.Read((void*)&m_iAngleFilter, sizeof(int));
@@ -78,6 +79,7 @@ CiPeeCV::CiPeeCV(CWnd* pWndCP = NULL)
 	cvCreateTrackbar("Rho", "iPeeOrig", &m_iRho, 50, NULL);
 	cvCreateTrackbar("Threshold", "iPeeOrig", &m_iHoughThreshold, 100, NULL);
 	cvCreateTrackbar("Min Line Len.", "iPeeOrig", &m_iMinLineLen, 150, NULL);
+	cvCreateTrackbar("Max Line Len.", "iPeeOrig", &m_iMaxLineLen, 150, NULL);
 	cvCreateTrackbar("Max Line Gap", "iPeeOrig", &m_iMaxLineGap, 150, NULL);
 
 	cvCreateTrackbar("X Offset", "iPeeAux", &m_iXOffset, 100, NULL);
@@ -242,6 +244,7 @@ void CiPeeCV::Shutdown(void)
 	fSettings.Write(&m_iRho, sizeof(int));
 	fSettings.Write(&m_iHoughThreshold, sizeof(int));
 	fSettings.Write(&m_iMinLineLen, sizeof(int));
+	fSettings.Write(&m_iMaxLineLen, sizeof(int));
 	fSettings.Write(&m_iMaxLineGap, sizeof(int));
 
 	fSettings.Write(&m_iAngleFilter, sizeof(int));
@@ -305,7 +308,7 @@ void CiPeeCV::SendMouseInput(WSABUF* pBuf)
 UINT iPeeCV(CiPeeCV* pThis)
 {
 	int iRes = 0;
-	int i;
+	int i, iLastFrame = 0, dx, dy;
 	
 	pThis->SendStatusEvt(_T("iPee CV worker thread is up"));
 	
@@ -417,9 +420,8 @@ UINT iPeeCV(CiPeeCV* pThis)
 			//	cvCopy(iplCap, iplOrig);
 			
 			//transpose and flip the image
-			cvTranspose(iplCap, iplOrig);
-			cvFlip(iplOrig, iplFlip, 0);
-			cvCopy(iplFlip, iplOrig);
+			cvTranspose(iplCap, iplFlip);
+			//cvFlip(iplOrig, iplFlip, 0);
 			//cvCopy(iplCap, iplOrig);			
 
 			//if this is the first frame create the image objects
@@ -468,8 +470,9 @@ UINT iPeeCV(CiPeeCV* pThis)
 
 			//convert the image's color space
 			//cvCvtColor(iplOrig, iplGray, CV_BGR2GRAY);
-			cvCvtColor(iplOrig, iplOrig, CV_BGR2YCrCb);
-			
+			cvCvtColor(iplFlip, iplOrig, CV_BGR2YCrCb);
+			//cvCopy(iplFlip, iplOrig);
+						
 			//cvAbsDiff(iplGray, iplBack8b, iplFG);
 			//cvCopy(iplGray, iplBack8b);
 			
@@ -546,7 +549,7 @@ UINT iPeeCV(CiPeeCV* pThis)
 			////perform canny edge detection
 			//cvCanny(iplFG, iplCanny, pThis->m_iCannyThreshold1,
 			//	pThis->m_iCannyThreshold2);
-			
+						
 			//perform a probabilistic Hough transform
 			seqLines = cvHoughLines2(iplFG, storage, CV_HOUGH_PROBABILISTIC, pThis->m_iRho, 
 				CV_PI/180, pThis->m_iHoughThreshold, 
@@ -556,11 +559,14 @@ UINT iPeeCV(CiPeeCV* pThis)
 			for(i = 0; i < seqLines->total; i++)
 			{
 				line = (CvPoint*)cvGetSeqElem(seqLines, i);
+				dx = abs(line[0].x - line[1].x);
+				dy = abs(line[0].y - line[1].y);
 
 				//check that line meets angle and starting position filter
 				if (90 - cvFastArctan(fabsf((float)(line[0].y - line[1].y)), 
 					fabsf((float)(line[0].x - line[1].x))) < (float)pThis->m_iAngleFilter &&
-					max(line[0].y, line[1].y) > pThis->m_iPeeStartPos) {
+					max(line[0].y, line[1].y) > pThis->m_iPeeStartPos + 100 &&
+					sqrt((float)(dx*dx + dy*dy)) < pThis->m_iMaxLineLen) {
 
 					
 					//we need the upper point first
@@ -577,13 +583,13 @@ UINT iPeeCV(CiPeeCV* pThis)
 						//}
 
 						//track the point with a cirlce and calculate X,Y transform
-						cvCircle(iplOrig, line[1], 10, CV_RGB(0,0,0), 3, 8);
+						cvCircle(iplFlip, line[1], 10, CV_RGB(0,0,0), 3, 8);
 						iPnt[0] = (int)(
-							(double)line[1].x * (double)pThis->m_iWFactor / 5.0 + 
-							((double)pThis->m_iXOffset - 50) * 10.0);
+							((double)pThis->m_iXOffset + 150 - (double)line[1].x) * 
+							((double)pThis->m_iWFactor / 5.0));
 						iPnt[1] = (int)(
-							(double)line[1].y * (double)pThis->m_iHFactor / 10.0 + 
-							((double)pThis->m_iYOffset - 50) * 10.0);
+							((double)pThis->m_iYOffset - 150 + (double)line[1].y) * 
+							((double)pThis->m_iHFactor / 5.0));
 					}
 					else {
 						//cvSeqPush(seq, &line[0]);
@@ -599,17 +605,20 @@ UINT iPeeCV(CiPeeCV* pThis)
 						//}
 
 						//track the point with a cirlce and calculate X,Y transform
-						cvCircle(iplOrig, line[0], 10, CV_RGB(0,0,0), 3, 8);
+						cvCircle(iplFlip, line[0], 10, CV_RGB(0,0,0), 3, 8);
 						iPnt[0] = (int)(
-							(double)line[0].x * (double)pThis->m_iWFactor / 5.0 + 
-							((double)pThis->m_iXOffset - 50) * 10.0);
+							((double)pThis->m_iXOffset + 150 - (double)line[0].x) * 
+							((double)pThis->m_iWFactor / 5.0));
 						iPnt[1] = (int)(
-							(double)line[0].y * (double)pThis->m_iHFactor / 10.0 + 
-							((double)pThis->m_iYOffset - 50) * 10.0);
+							((double)pThis->m_iYOffset - 150 + (double)line[0].y) * 
+							((double)pThis->m_iHFactor / 5.0));
 					}
 					
-					pThis->SendMouseInput(&buf);
-					//cvLine(iplOrig, line[0], line[1], CV_RGB(255,255,255), 3);
+					//if (iFrame - iLastFrame > 5)
+						pThis->SendMouseInput(&buf);
+					iLastFrame = iFrame;
+
+					cvLine(iplFlip, line[0], line[1], CV_RGB(255,255,255), 3);
 					
 					//we only need Hough's best line
 					break;
@@ -655,7 +664,7 @@ UINT iPeeCV(CiPeeCV* pThis)
 			//if (iFrame % 5 == 0)
 			//	pnt.x = pnt.y = 0;
 
-			cvShowImage("iPeeOrig", iplOrig);
+			cvShowImage("iPeeOrig", iplFlip);
 			cvShowImage("iPeeFG", iplFG);
 			//cvShowImage("iPeeAux", iplCanny);
 
